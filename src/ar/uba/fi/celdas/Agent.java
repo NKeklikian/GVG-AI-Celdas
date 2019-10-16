@@ -1,12 +1,13 @@
 package ar.uba.fi.celdas;
 
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.List;
 
 import core.game.StateObservation;
 import core.player.AbstractPlayer;
 import ontology.Types;
 import tools.ElapsedCpuTimer;
+import tools.Vector2d;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,14 +18,15 @@ import tools.ElapsedCpuTimer;
  */
 public class Agent extends AbstractPlayer {
     /**
-     * Random generator for the agent.
-     */
-    protected Random randomGenerator;
-    /**
      * List of available actions for the agent
      */
     protected ArrayList<Types.ACTIONS> actions;
 
+    protected Planner planner;
+    private Types.ACTIONS pastAction;
+    private StateObservation pastState;
+    private Vector2d pastPosition;
+    private Types.ACTIONS action;
 
     protected Theories theories;
     
@@ -35,8 +37,40 @@ public class Agent extends AbstractPlayer {
      */
     public Agent(StateObservation so, ElapsedCpuTimer elapsedTimer)
     {
-        randomGenerator = new Random();
+        try {
+            theories = TheoryPersistant.load();
+        } catch (Exception e) {
+            theories = new Theories();
+        }
+
+        Vector2d exit = so.getPortalsPositions()[0].get(0).position;
+        exit.x = exit.x / so.getBlockSize();
+        exit.y = exit.y / so.getBlockSize();
+
+        planner = new Planner(theories, exit);
+        pastAction = Types.ACTIONS.ACTION_NIL;
         actions = so.getAvailableActions();
+        pastState = so;
+    }
+
+    public Vector2d avatarPosition(StateObservation stateObs) {
+        Vector2d avatarPosition = stateObs.getAvatarPosition();
+        avatarPosition.x = avatarPosition.x / stateObs.getBlockSize();
+        avatarPosition.y = avatarPosition.y / stateObs.getBlockSize();
+        return avatarPosition;
+    }
+
+    public char[][] getState(StateObservation stateObs){
+        int avatarX = (int) avatarPosition(stateObs).x;
+        int avatarY = (int) avatarPosition(stateObs).y;
+        char[][] state = new char[3][3];
+
+        for (int i = avatarY - 1; i < avatarY + 2; i++) {
+            for (int j = avatarX - 1; j < avatarX + 2; j++) {
+                state[i + 1 - avatarY][j + 1 - avatarX] = new Perception(stateObs).getLevel()[i][j];
+            }
+        }
+        return state;
     }
 
 
@@ -49,13 +83,45 @@ public class Agent extends AbstractPlayer {
      */
     public Types.ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
     	
-    	
-    	//TODO: Replace here the content and create an autonomous agent
-    	Perception perception = new Perception(stateObs);
-        System.out.println(perception.toString());
-    	
-        int index = randomGenerator.nextInt(actions.size());
-        return actions.get(index);
+        Perception perception = new Perception(stateObs);
+        Perception pastPerception = new Perception(pastState);
+        System.out.println(pastPerception.toString());
+
+        char[][] currentState = getState(pastState);
+        char[][] predictedState = getState(stateObs);
+
+        Theory theory = new Theory();
+        theory.setCurrentState(currentState);
+        theory.setAction(pastAction);
+        theory.setPredictedState(predictedState);
+
+        List<Theory> theoryList = theories.getSortedListForCurrentState(theory);
+
+        theories = planner.updateTheories(theories,theory,stateObs);
+        if (!theoryList.isEmpty() && (theoryList.size() == actions.size() || !planner.explore())){
+            action = planner.getTheory(theoryList).getAction();
+        } else {
+            action = planner.random(actions);
+        }
+
+        pastAction = action;
+        pastState = stateObs;
+        return action;
+    }
+
+    public void result(StateObservation stateObs, ElapsedCpuTimer elapsedCpuTimer) {
+        if (stateObs.isGameOver()) {
+            Theory theory = new Theory();
+            theory.setCurrentState(new Perception(pastState).getLevel());
+            theory.setAction(pastAction);
+            theory.setPredictedState(new Perception(stateObs).getLevel());
+            theories = planner.updateTheories(theories,theory,stateObs);
+            try {
+                TheoryPersistant.save(theories);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
