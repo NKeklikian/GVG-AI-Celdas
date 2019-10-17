@@ -42,28 +42,44 @@ public class Planner {
 
     private float utility(StateObservation state) {
         double distance = avatarPosition(state).dist(exit);
-        return 1000 / (float)(1 + distance);
+        return 100 / (float)(1 + distance * distance);
     }
 
     public Theories updateTheories(Theories theories, Theory pastTheory, StateObservation state) {
         Map<Integer, List<Theory>> theoryMap = theories.getTheories();
-        if(state.isAvatarAlive()) {
-            pastTheory.setUsedCount(1);
-            if(!pastTheory.getAction().equals(Types.ACTIONS.ACTION_NIL)) {
-                pastTheory.setUtility(utility(state));
-                pastTheory.setSuccessCount(1);
-            } else {
-                pastTheory.setSuccessCount(0);
-                pastTheory.setUtility(0);
+        if(theories.existsTheory(pastTheory)) {
+            List<Theory> theoryList = theoryMap.get(pastTheory.hashCodeOnlyCurrentState());
+            for (final ListIterator<Theory> it = theoryList.listIterator(); it.hasNext(); ) {
+                Theory theory = it.next();
+                if (theory.equals(pastTheory)) {
+                    theory.setUsedCount(theory.getUsedCount() + 1);
+                    if (state.isAvatarAlive()) {
+                        theory.setSuccessCount(theory.getSuccessCount() + 1);
+                    }
+                    it.set(theory);
+                }
             }
+            theoryMap.put(pastTheory.hashCodeOnlyCurrentState(), theoryList);
+            theories.setTheories(theoryMap);
         } else {
-            pastTheory.setUtility(0);
-            pastTheory.setUsedCount(1);
-            pastTheory.setSuccessCount(0);
+            if (state.isAvatarAlive()) {
+                pastTheory.setUsedCount(1);
+                if (!pastTheory.getAction().equals(Types.ACTIONS.ACTION_NIL)) {
+                    pastTheory.setUtility(utility(state));
+                    pastTheory.setSuccessCount(1);
+                } else {
+                    pastTheory.setSuccessCount(0);
+                    pastTheory.setUtility(0);
+                }
+            } else {
+                pastTheory.setUtility(0);
+                pastTheory.setUsedCount(1);
+                pastTheory.setSuccessCount(0);
+            }
+            try {
+                theories.add(pastTheory);
+            } catch (Exception e) {}
         }
-        try {
-            theories.add(pastTheory);
-         } catch (Exception e) {}
         return theories;
     }
 
