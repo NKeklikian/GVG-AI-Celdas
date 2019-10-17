@@ -112,9 +112,9 @@ public class Agent extends AbstractPlayer {
     public void result(StateObservation stateObs, ElapsedCpuTimer elapsedCpuTimer) {
         if (stateObs.isGameOver()) {
             Theory theory = new Theory();
-            theory.setCurrentState(new Perception(pastState).getLevel());
+            theory.setCurrentState(getState(pastState));
             theory.setAction(pastAction);
-            theory.setPredictedState(new Perception(stateObs).getLevel());
+            theory.setPredictedState(getState(stateObs));
             theories = planner.updateTheories(theories,theory,stateObs);
             try {
                 TheoryPersistant.save(theories);
