@@ -42,13 +42,14 @@ public class Planner {
 
     private float utility(StateObservation state) {
         double distance = avatarPosition(state).dist(exit);
-        return 100 / (float)(1 + distance * distance);
+        return 100 / (float)(1 + distance);
     }
 
-    public Theories updateTheories(Theories theories, Theory pastTheory, StateObservation state) {
+    public Theories updateTheories(Theories theories, Theory pastTheory, StateObservation state, boolean moved) {
         Map<Integer, List<Theory>> theoryMap = theories.getTheories();
+        System.out.println(moved);
         if(theories.existsTheory(pastTheory)) {
-            List<Theory> theoryList = theoryMap.get(pastTheory.hashCodeOnlyCurrentState());
+            List<Theory> theoryList = theories.getSortedListForCurrentState(pastTheory);
             for (final ListIterator<Theory> it = theoryList.listIterator(); it.hasNext(); ) {
                 Theory theory = it.next();
                 if (theory.equals(pastTheory)) {
@@ -64,7 +65,7 @@ public class Planner {
         } else {
             if (state.isAvatarAlive()) {
                 pastTheory.setUsedCount(1);
-                if (!pastTheory.getAction().equals(Types.ACTIONS.ACTION_NIL)) {
+                if (moved) {
                     pastTheory.setUtility(utility(state));
                     pastTheory.setSuccessCount(1);
                 } else {
@@ -84,7 +85,7 @@ public class Planner {
     }
 
     public boolean explore() {
-        return randomGenerator.nextInt(2) == 1;
+        return randomGenerator.nextInt(20) > 10;
     }
 
     public Types.ACTIONS random(List<Types.ACTIONS> actions) {
