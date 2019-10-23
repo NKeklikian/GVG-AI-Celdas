@@ -10,12 +10,13 @@ public class Planner {
 
     private Theories theories;
     private Random randomGenerator;
-    private Comparator<Theory> comparator;
+    //private Comparator<Theory> comparator; //  I might try to use this later
     private Vector2d exit;
 
     Planner(Theories theories, Vector2d exit) {
         this.theories = theories;
         randomGenerator = new Random();
+        /* I might try to use this later
         comparator = (left, right) -> {
             if (left.getUtility() < right.getUtility()) {
                 return 1;
@@ -23,14 +24,20 @@ public class Planner {
                 return -1;
             }
             return 0;
-        };
+        };*/
         this.exit = exit;
     }
 
     public Theory getTheory(List<Theory> stateTheories) {
-        Theory theory = new Theory();
-        stateTheories.sort(comparator);
-        return stateTheories.get(0);
+        //stateTheories.sort(comparator);
+        //System.out.println(stateTheories);
+        int i = randomGenerator.nextInt((stateTheories.size()));
+        while (stateTheories.get(i).getUtility()  == 0) { // Useless theory
+            i = randomGenerator.nextInt((stateTheories.size()));
+        }
+        //System.out.println(stateTheories.get(i));
+        System.out.printf("Predicted utility: %s\n",stateTheories.get(i).getUtility());
+        return stateTheories.get(i);
     }
 
     public Vector2d avatarPosition(StateObservation stateObs) {
@@ -42,13 +49,14 @@ public class Planner {
 
     private float utility(StateObservation state) {
         double distance = avatarPosition(state).dist(exit);
-        return 100 / (float)(1 + distance);
+        return 1000 / (float)(1 + distance);
     }
 
     public Theories updateTheories(Theories theories, Theory pastTheory, StateObservation state, boolean moved) {
         Map<Integer, List<Theory>> theoryMap = theories.getTheories();
-        System.out.println(moved);
+        //System.out.printf("moved:%s\n",moved);
         if(theories.existsTheory(pastTheory)) {
+            //System.out.println("Existing theory");
             List<Theory> theoryList = theories.getSortedListForCurrentState(pastTheory);
             for (final ListIterator<Theory> it = theoryList.listIterator(); it.hasNext(); ) {
                 Theory theory = it.next();
@@ -63,6 +71,7 @@ public class Planner {
             theoryMap.put(pastTheory.hashCodeOnlyCurrentState(), theoryList);
             theories.setTheories(theoryMap);
         } else {
+            //System.out.println("Not existing theory");
             if (state.isAvatarAlive()) {
                 pastTheory.setUsedCount(1);
                 if (moved) {
@@ -79,7 +88,9 @@ public class Planner {
             }
             try {
                 theories.add(pastTheory);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return theories;
     }
