@@ -26,6 +26,7 @@ public class Theories {
 			}
 			theoryList.add(theory);
 			this.existenceSet.add(theory.hashCode());
+			this.theories.put(theory.hashCodeOnlyCurrentState(), theoryList);
 		}else{
 			throw new Exception("Theory already exist!");
 		}
