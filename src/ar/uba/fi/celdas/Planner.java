@@ -36,7 +36,7 @@ public class Planner {
             i = randomGenerator.nextInt((stateTheories.size()));
         }
         //System.out.println(stateTheories.get(i));
-        System.out.printf("Predicted utility: %s\n",stateTheories.get(i).getUtility());
+        //System.out.printf("Predicted utility: %s\n",stateTheories.get(i).getUtility());
         return stateTheories.get(i);
     }
 
