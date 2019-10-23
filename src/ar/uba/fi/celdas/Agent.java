@@ -48,7 +48,7 @@ public class Agent extends AbstractPlayer {
         exit.y = exit.y / so.getBlockSize();
 
         planner = new Planner(theories, exit);
-        pastAction = Types.ACTIONS.ACTION_NIL;
+        pastAction = Types.ACTIONS.ACTION_LEFT;
         actions = so.getAvailableActions();
         pastState = so;
     }
