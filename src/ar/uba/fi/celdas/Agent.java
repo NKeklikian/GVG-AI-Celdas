@@ -96,18 +96,33 @@ public class Agent extends AbstractPlayer {
         theory.setCurrentState(currentState);
         theory.setAction(pastAction);
         theory.setPredictedState(predictedState);
-
+        //System.out.println(theory);
+        //System.out.println(theories.getSortedListForCurrentState(theory));
         theories = planner.updateTheories(theories,theory,stateObs,!(avatarPosition(pastState).equals(avatarPosition(stateObs))));
 
         theory = new Theory();
         theory.setCurrentState(predictedState);
         List<Theory> theoryList = theories.getSortedListForCurrentState(theory);
 
+        //System.out.println(theories.getSortedListForCurrentState(theory));
+        //System.out.println(theoryList.size());
+        //System.out.println(actions);
+        //System.out.println(actions.size());
+        //System.out.println(theoryList);
+
         if (!theoryList.isEmpty() && (theoryList.size() == actions.size() || !planner.explore())){
             action = planner.getTheory(theoryList).getAction();
+            //System.out.println("Theory");
         } else {
-            action = planner.random(actions);
+            List<Types.ACTIONS> actionsCopy = new ArrayList(actions);
+            for (Theory t: theoryList) {
+                actionsCopy.remove(t.getAction());
+            }
+            //System.out.println(actionsCopy);
+            action = planner.random(actionsCopy);
+            //System.out.println("Explore");
         }
+        //System.out.println(action);
 
         pastAction = action;
         pastState = stateObs;
