@@ -29,7 +29,7 @@ public class Agent extends AbstractPlayer {
     private Types.ACTIONS action;
 
     protected Theories theories;
-    
+
     /**
      * Public constructor with state observation and time due.
      * @param so state observation of the current game.
@@ -61,16 +61,18 @@ public class Agent extends AbstractPlayer {
     }
 
     public char[][] getState(StateObservation stateObs){
+        /* Attempt to use 3x3 theories
         int avatarX = (int) avatarPosition(stateObs).x;
         int avatarY = (int) avatarPosition(stateObs).y;
         char[][] state = new char[3][3];
-
         for (int i = avatarY - 1; i < avatarY + 2; i++) {
             for (int j = avatarX - 1; j < avatarX + 2; j++) {
                 state[i + 1 - avatarY][j + 1 - avatarX] = new Perception(stateObs).getLevel()[i][j];
             }
         }
-        return state;
+        return state
+        */
+        return new Perception(stateObs).getLevel();
     }
 
 
@@ -82,7 +84,7 @@ public class Agent extends AbstractPlayer {
      * @return An action for the current state
      */
     public Types.ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-    	
+
         Perception perception = new Perception(stateObs);
         Perception pastPerception = new Perception(pastState);
         System.out.println(pastPerception.toString());
