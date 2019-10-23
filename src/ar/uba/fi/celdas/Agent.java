@@ -99,6 +99,8 @@ public class Agent extends AbstractPlayer {
 
         theories = planner.updateTheories(theories,theory,stateObs,!(avatarPosition(pastState).equals(avatarPosition(stateObs))));
 
+        theory = new Theory();
+        theory.setCurrentState(predictedState);
         List<Theory> theoryList = theories.getSortedListForCurrentState(theory);
 
         if (!theoryList.isEmpty() && (theoryList.size() == actions.size() || !planner.explore())){
