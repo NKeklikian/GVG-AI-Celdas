@@ -97,10 +97,10 @@ public class Agent extends AbstractPlayer {
         theory.setAction(pastAction);
         theory.setPredictedState(predictedState);
 
+        theories = planner.updateTheories(theories,theory,stateObs,!(avatarPosition(pastState).equals(avatarPosition(stateObs))));
 
         List<Theory> theoryList = theories.getSortedListForCurrentState(theory);
 
-        theories = planner.updateTheories(theories,theory,stateObs,!(avatarPosition(pastState).equals(avatarPosition(stateObs))));
         if (!theoryList.isEmpty() && (theoryList.size() == actions.size() || !planner.explore())){
             action = planner.getTheory(theoryList).getAction();
         } else {
