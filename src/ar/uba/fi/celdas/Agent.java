@@ -75,6 +75,19 @@ public class Agent extends AbstractPlayer {
         return new Perception(stateObs).getLevel();
     }
 
+    public String charArrayToStr(char[][] charrarray ){
+        StringBuilder sb = new StringBuilder("");
+        if(charrarray!=null){
+            for(int i=0;i< charrarray.length; i++){
+                for(int j=0;j<  charrarray[i].length; j++){
+                    sb.append(charrarray[i][j]);
+                }
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
 
     /**
      * Picks an action. This function is called every game step to request an
@@ -88,7 +101,6 @@ public class Agent extends AbstractPlayer {
         Perception perception = new Perception(stateObs);
         Perception pastPerception = new Perception(pastState);
         System.out.println(pastPerception.toString());
-
         char[][] currentState = getState(pastState);
         char[][] predictedState = getState(stateObs);
 
@@ -98,34 +110,36 @@ public class Agent extends AbstractPlayer {
         theory.setPredictedState(predictedState);
         //System.out.println(theory);
         //System.out.println(theories.getSortedListForCurrentState(theory));
-        theories = planner.updateTheories(theories,theory,stateObs,!(avatarPosition(pastState).equals(avatarPosition(stateObs))));
-
+        theories = planner.updateTheories(theories,theory,stateObs,!(avatarPosition(pastState).equals(avatarPosition(stateObs))),false);
         theory = new Theory();
         theory.setCurrentState(predictedState);
         List<Theory> theoryList = theories.getSortedListForCurrentState(theory);
-
         //System.out.println(theories.getSortedListForCurrentState(theory));
         //System.out.println(theoryList.size());
         //System.out.println(actions);
         //System.out.println(actions.size());
         //System.out.println(theoryList);
-
-        if (!theoryList.isEmpty() && (theoryList.size() == actions.size() || !planner.explore())){
+        if (theoryList.size() == actions.size()){
             action = planner.getTheory(theoryList).getAction();
-            //System.out.println("Theory");
         } else {
+            //System.out.println("Explore");
             List<Types.ACTIONS> actionsCopy = new ArrayList(actions);
             for (Theory t: theoryList) {
                 actionsCopy.remove(t.getAction());
             }
             //System.out.println(actionsCopy);
             action = planner.random(actionsCopy);
-            //System.out.println("Explore");
         }
         //System.out.println(action);
 
         pastAction = action;
         pastState = stateObs;
+
+        if (planner.hasWinningPath()) {
+            planner.createLabyrinth();
+            return planner.nextAction(charArrayToStr(perception.getLevel()).hashCode());
+        }
+
         return action;
     }
 
@@ -139,7 +153,7 @@ public class Agent extends AbstractPlayer {
             } else {
                 theory.setPredictedState(getState(pastState));
             }
-            theories = planner.updateTheories(theories,theory,stateObs,true);
+            theories = planner.updateTheories(theories,theory,stateObs,true, stateObs.isAvatarAlive() );
             try {
                 TheoryPersistant.save(theories);
             } catch (Exception e) {

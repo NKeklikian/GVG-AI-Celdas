@@ -3,6 +3,11 @@ package ar.uba.fi.celdas;
 import core.game.StateObservation;
 import ontology.Types;
 import tools.Vector2d;
+import org.jgrapht.Graph;
+import org.jgrapht.GraphPath;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
+import org.jgrapht.graph.DefaultEdge;
 
 import java.util.*;
 
@@ -11,11 +16,14 @@ public class Planner {
     private Theories theories;
     private Random randomGenerator;
     //private Comparator<Theory> comparator; //  I might try to use this later
-    private Vector2d exit;
+    private Vector2d vector_exit;
+    private Graph<Integer, DefaultEdge> labyrinth;
+    private int exit;
 
-    Planner(Theories theories, Vector2d exit) {
+    Planner(Theories theories, Vector2d vector_exit) {
         this.theories = theories;
         randomGenerator = new Random();
+        labyrinth = new DefaultDirectedWeightedGraph<>(DefaultEdge.class);
         /* I might try to use this later
         comparator = (left, right) -> {
             if (left.getUtility() < right.getUtility()) {
@@ -25,7 +33,58 @@ public class Planner {
             }
             return 0;
         };*/
-        this.exit = exit;
+        this.vector_exit = vector_exit;
+        for (List<Theory> theorieList : theories.getTheories().values()) {
+            for (Theory t : theorieList) {
+                if (t.getUtility() == 0) {
+                    this.exit = t.charArrayToStr(t.getPredictedState()).hashCode();
+                }
+            }
+        }
+    }
+
+    public void createLabyrinth() {
+        for (List<Theory> theoryList : theories.getTheories().values()) {
+            for (Theory t : theoryList) {
+                int currentStateVertex = t.hashCodeOnlyCurrentState();
+                int predictedStateVertex = t.hashCodeOnlyPredictedState();
+                labyrinth.addVertex(currentStateVertex);
+                labyrinth.addVertex(predictedStateVertex);
+                DefaultEdge edge = labyrinth.addEdge(currentStateVertex, predictedStateVertex);
+                if (edge != null) {
+                    labyrinth.setEdgeWeight(edge, t.getSuccessCount() / t.getUsedCount());
+                }
+            }
+        }
+    }
+
+    public Boolean hasWinningPath() {
+        for (List<Theory> theoryList : theories.getTheories().values()) {
+            for (Theory t : theoryList) {
+                if (t.getUtility() == 1000) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public Types.ACTIONS nextAction(Integer position) {
+        Types.ACTIONS action = null;
+        List<Integer> path = new DijkstraShortestPath(labyrinth).getPath(position, exit).getVertexList();
+        List<Theory> theoryList = theories.getTheories().get(position);
+        for (Theory t : theoryList) {
+            try {
+                if (t.hashCodeOnlyPredictedState() == path.get(1)) {
+                    action = t.getAction();
+                }
+            } catch (Exception e){
+                if (t.hashCodeOnlyPredictedState() == path.get(0)) {
+                    action = t.getAction();
+                }
+            }
+        }
+        return action;
     }
 
     public Theory getTheory(List<Theory> stateTheories) {
@@ -48,15 +107,14 @@ public class Planner {
     }
 
     private float utility(StateObservation state) {
-        double distance = avatarPosition(state).dist(exit);
+        double distance = avatarPosition(state).dist(vector_exit);
         return 1000 / (float)(1 + distance);
     }
 
-    public Theories updateTheories(Theories theories, Theory pastTheory, StateObservation state, boolean moved) {
+    public Theories updateTheories(Theories theories, Theory pastTheory, StateObservation state, boolean moved, boolean won) {
         Map<Integer, List<Theory>> theoryMap = theories.getTheories();
         //System.out.printf("moved:%s\n",moved);
         if(theories.existsTheory(pastTheory)) {
-            //System.out.println("Existing theory");
             List<Theory> theoryList = theories.getSortedListForCurrentState(pastTheory);
             for (final ListIterator<Theory> it = theoryList.listIterator(); it.hasNext(); ) {
                 Theory theory = it.next();
@@ -75,7 +133,11 @@ public class Planner {
             if (state.isAvatarAlive()) {
                 pastTheory.setUsedCount(1);
                 if (moved) {
-                    pastTheory.setUtility(utility(state));
+                    if (won) {
+                        pastTheory.setUtility(1000);
+                    } else {
+                        pastTheory.setUtility(utility(state));
+                    }
                     pastTheory.setSuccessCount(1);
                 } else {
                     pastTheory.setSuccessCount(0);

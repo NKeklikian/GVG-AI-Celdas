@@ -52,7 +52,7 @@ public class Theory  implements Comparable<Theory>{
 		this.utility = utility;
 	}
 	
-	private String charArrayToStr(char[][] charrarray ){
+	public String charArrayToStr(char[][] charrarray ){
 		StringBuilder sb = new StringBuilder("");
 		if(charrarray!=null){
 			 for(int i=0;i< charrarray.length; i++){
@@ -97,6 +97,10 @@ public class Theory  implements Comparable<Theory>{
 	public int hashCodeOnlyCurrentState() {
 		return this.charArrayToStr(currentState).hashCode();
 	}
+
+    public int hashCodeOnlyPredictedState() {
+        return this.charArrayToStr(predictedState).hashCode();
+    }
 
    @Override
    public boolean equals(Object obj) {
