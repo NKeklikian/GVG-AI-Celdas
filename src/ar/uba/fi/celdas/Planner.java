@@ -36,7 +36,7 @@ public class Planner {
         this.vector_exit = vector_exit;
         for (List<Theory> theorieList : theories.getTheories().values()) {
             for (Theory t : theorieList) {
-                if (t.getUtility() == 0) {
+                if (t.getUtility() == 1000) {
                     this.exit = t.charArrayToStr(t.getPredictedState()).hashCode();
                 }
             }
@@ -74,14 +74,8 @@ public class Planner {
         List<Integer> path = new DijkstraShortestPath(labyrinth).getPath(position, exit).getVertexList();
         List<Theory> theoryList = theories.getTheories().get(position);
         for (Theory t : theoryList) {
-            try {
-                if (t.hashCodeOnlyPredictedState() == path.get(1)) {
-                    action = t.getAction();
-                }
-            } catch (Exception e){
-                if (t.hashCodeOnlyPredictedState() == path.get(0)) {
-                    action = t.getAction();
-                }
+            if (t.hashCodeOnlyPredictedState() == path.get(1)) {
+                action = t.getAction();
             }
         }
         return action;

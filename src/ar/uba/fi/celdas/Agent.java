@@ -110,6 +110,7 @@ public class Agent extends AbstractPlayer {
         theory.setPredictedState(predictedState);
         //System.out.println(theory);
         //System.out.println(theories.getSortedListForCurrentState(theory));
+        //System.out.println(theory);
         theories = planner.updateTheories(theories,theory,stateObs,!(avatarPosition(pastState).equals(avatarPosition(stateObs))),false);
         theory = new Theory();
         theory.setCurrentState(predictedState);
@@ -118,8 +119,19 @@ public class Agent extends AbstractPlayer {
         //System.out.println(theoryList.size());
         //System.out.println(actions);
         //System.out.println(actions.size());
+        //System.out.println("Theory list");
         //System.out.println(theoryList);
-        if (theoryList.size() == actions.size()){
+
+        if (planner.hasWinningPath()) {
+            planner.createLabyrinth();
+            Types.ACTIONS action = planner.nextAction(charArrayToStr(perception.getLevel()).hashCode());
+            //System.out.println(action);
+            pastAction = action;
+            pastState = stateObs;
+            return action;
+        }
+
+        if (theoryList.size() >= actions.size()){
             action = planner.getTheory(theoryList).getAction();
         } else {
             //System.out.println("Explore");
@@ -132,13 +144,9 @@ public class Agent extends AbstractPlayer {
         }
         //System.out.println(action);
 
-        pastAction = action;
-        pastState = stateObs;
 
-        if (planner.hasWinningPath()) {
-            planner.createLabyrinth();
-            return planner.nextAction(charArrayToStr(perception.getLevel()).hashCode());
-        }
+
+
 
         return action;
     }
