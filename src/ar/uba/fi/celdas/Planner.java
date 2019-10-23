@@ -34,8 +34,8 @@ public class Planner {
             return 0;
         };*/
         this.vector_exit = vector_exit;
-        for (List<Theory> theorieList : theories.getTheories().values()) {
-            for (Theory t : theorieList) {
+        for (List<Theory> theoryList : theories.getTheories().values()) {
+            for (Theory t : theoryList) {
                 if (t.getUtility() == 1000) {
                     this.exit = t.charArrayToStr(t.getPredictedState()).hashCode();
                 }
@@ -59,14 +59,7 @@ public class Planner {
     }
 
     public Boolean hasWinningPath() {
-        for (List<Theory> theoryList : theories.getTheories().values()) {
-            for (Theory t : theoryList) {
-                if (t.getUtility() == 1000) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return theories.getTheories().values().stream().anyMatch(theoryList ->  theoryList.stream().anyMatch(t -> t.getUtility() == 1000));
     }
 
     public Types.ACTIONS nextAction(Integer position) {
