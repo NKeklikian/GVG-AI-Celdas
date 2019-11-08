@@ -143,6 +143,8 @@ public class Agent extends AbstractPlayer {
             action = planner.random(actionsCopy);
         }
         //System.out.println(action);
+        pastAction = action;
+        pastState = stateObs;
 
 
 
